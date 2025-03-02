@@ -4,6 +4,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import imageCompression from "browser-image-compression";
+
 import { X } from "lucide-react";
 
 export default function Home() {
@@ -43,19 +45,37 @@ export default function Home() {
     localStorage.setItem("dailyTarget", JSON.stringify(dailyTarget));
   }, [dailyTarget]);
 
-  const handleFileInputChange = (event) => {
+  const handleFileInputChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result.split(",")[1];
-        setImage(base64);
-        setPreview(reader.result);
-        await handleAnalyze(base64);
-      };
-      reader.readAsDataURL(file);
+      try {
+        // Set compression options.
+        const options = {
+          maxSizeMB: 0.3, // Adjust the max size in MB as needed.
+          maxWidthOrHeight: 800, // Resize the image if its dimensions exceed 800px.
+          useWebWorker: true
+        };
+
+        // Compress the image using the external library.
+        const compressedFile = await imageCompression(file, options);
+
+        // Convert the compressed file to a base64 string.
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const compressedDataUrl = reader.result;
+          const base64 = compressedDataUrl.split(",")[1];
+          setImage(base64);
+          setPreview(compressedDataUrl);
+          await handleAnalyze(base64);
+        };
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        console.error("Error compressing image:", error);
+        alert("Failed to compress image. Please try another image.");
+      }
     }
   };
+
 
   const handleAnalyze = async (img) => {
     const imageToAnalyze = img || image;
