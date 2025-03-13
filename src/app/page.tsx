@@ -86,17 +86,43 @@ export default function Home() {
       const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GOOGLE_API_KEY);
       const model = genAI.getGenerativeModel({ model: "models/gemini-1.5-pro" });
 
-      const prompt = `Analyze this food image. Identify all food items present and return a structured JSON response with each food's name, calories, protein, carbs, and fats. 
-Example response:
+      const prompt = `Analyze the provided food image and identify all distinct food items present with high accuracy. Estimate the quantity of each food item based on visual cues such as portion size, shape, and density. Use standard food nutrition databases to calculate the total nutritional values (calories, protein, carbs, and fats) based on the estimated quantity. Ensure that the nutritional information is based on realistic serving sizes and is consistent with the detected portion size.
+
+Requirements:
+Food Identification:
+
+Identify each food item as specifically as possible (e.g., "Grilled Chicken Breast" instead of "Chicken").
+Differentiate between similar items where possible (e.g., "Brown Rice" vs. "White Rice").
+Include common condiments or sauces if identifiable (e.g., "Ketchup", "Mayonnaise").
+Quantity Estimation:
+
+Estimate the quantity in realistic, measurable units (e.g., grams, pieces, slices, cups).
+Adjust the nutritional values based on the estimated portion size (e.g., if a standard grilled chicken breast is 200g but the image shows a smaller portion, adjust the nutritional values accordingly).
+Nutritional Calculation:
+
+Calculate and return calories, protein, carbs, and fats as precise single numeric values — avoid using ranges.
+Use accurate nutritional data from trusted food databases to reflect real-world values.
+Adjust for cooking methods if possible (e.g., fried, baked, grilled).
+Formatting and Structure:
+
+Return the output in a structured JSON format.
+The format should follow this structure:
 {
-  "foods": [
-    { "name": "Grilled Chicken", "calories": 250, "protein": 30, "carbs": 2, "fats": 10 },
-    { "name": "Rice", "calories": 200, "protein": 5, "carbs": 45, "fats": 1 }
-  ]
+"foods": [
+{ "name": "Grilled Chicken", "quantity": "150g", "calories": 250, "protein": 30, "carbs": 2, "fats": 10 },
+{ "name": "Rice", "quantity": "200g", "calories": 200, "protein": 5, "carbs": 45, "fats": 1 }
+]
 }
-If the image is unclear or contains no food, respond with:
+Error Handling:
+
+If no food is detected or the image is too unclear to identify food items, return:
 { "error": "Unable to detect food items. Please try another image." }
- just give the json content and not anything else this is very strict criteria for your response
+Additional Guidelines:
+Ensure the response is clean, well-organized, and free of any extra formatting.
+Provide realistic and consistent values even if the food item is partially obscured or unclear.
+Avoid guesses — only return data if the item can be confidently identified.
+Do not return placeholder values or unknown categories — be specific or omit the item.
+If multiple identical items are detected (e.g., multiple slices of bread), calculate the total nutritional value based on the combined quantity.
 `;
 
       const result = await model.generateContent([
